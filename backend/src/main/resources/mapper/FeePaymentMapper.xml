@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.FeePaymentMapper">
+
+    <sql id="baseCols">
+        id, payment_no, bill_id, bill_no, owner_id, owner_name, fee_name,
+        amount, pay_method, pay_time, operator, remark
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.billId != null">AND bill_id = #{q.billId}</if>
+            <if test="q.ownerId != null">AND owner_id = #{q.ownerId}</if>
+            <if test="q.payMethod != null and q.payMethod != ''">AND pay_method = #{q.payMethod}</if>
+            <if test="q.beginDate != null">AND pay_time &gt;= #{q.beginDate}</if>
+            <if test="q.endDate != null">AND pay_time &lt;= CONCAT(#{q.endDate}, ' 23:59:59')</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (payment_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR bill_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR owner_name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR fee_name LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="FeePayment">
+        SELECT <include refid="baseCols"/> FROM fee_payment WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="FeePayment">
+        SELECT <include refid="baseCols"/>
+        FROM fee_payment
+        <include refid="whereCondition"/>
+        ORDER BY pay_time DESC, id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM fee_payment
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fee_payment
+        (payment_no, bill_id, bill_no, owner_id, owner_name, fee_name, amount,
+         pay_method, pay_time, operator, remark)
+        VALUES
+        (#{paymentNo}, #{billId}, #{billNo}, #{ownerId}, #{ownerName}, #{feeName},
+         IFNULL(#{amount}, 0), IFNULL(#{payMethod}, 'WECHAT'), IFNULL(#{payTime}, NOW()),
+         #{operator}, #{remark})
+    </insert>
+
+    <update id="updateById">
+        UPDATE fee_payment
+        <set>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="payMethod != null and payMethod != ''">pay_method = #{payMethod},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="operator != null">operator = #{operator},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fee_payment WHERE id = #{id}
+    </delete>
+
+    <!-- ============ 统计相关 ============ -->
+
+    <select id="sumGroupByMonth" resultType="map">
+        SELECT DATE_FORMAT(pay_time, '%Y-%m') AS name,
+               IFNULL(SUM(amount), 0) AS amount,
+               COUNT(*) AS value
+        FROM fee_payment
+        GROUP BY DATE_FORMAT(pay_time, '%Y-%m')
+        ORDER BY name ASC
+    </select>
+
+    <select id="sumGroupByMethod" resultType="map">
+        SELECT pay_method AS name,
+               IFNULL(SUM(amount), 0) AS amount,
+               COUNT(*) AS value
+        FROM fee_payment
+        GROUP BY pay_method
+        ORDER BY amount DESC
+    </select>
+
+    <select id="sumTodayAmount" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM fee_payment
+        WHERE DATE(pay_time) = CURDATE()
+    </select>
+
+</mapper>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="FAX3Oybu88PILRIJV4cWLP">
+
+<head data-page-node-id="vE19aL9qHi8Rdwh7cDApYt">
+    <meta charset="UTF-8" data-page-node-id="4eE9UD3iKZkQrTJHOHbtU4">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="VxvDuGTLcBj3MExmSi9DMN">
+    <title>登录 - 物业管理系统</title>
+    <link rel="stylesheet" href="libs/element-ui.css" data-page-node-id="5ZbSX74BuYUvO1N1bKttbU">
+    <link rel="stylesheet" href="css/style.css" data-page-node-id="0UTBtvSfUf8WYTC4Bs7Psw">
+    <style>
+        /* ==========================================================================
+           登录页 —— 暖色调设计
+           配色思路: 墨紫夜幕底 + 琥珀金/珊瑚橙主色 + 松绿点缀,
+                     刻意避开单一的蓝色调; 玻璃拟态卡片 + 大字号排版 + 微动效。
+           说明: .login-wrap / .login-btn / .demo-hint / .login-left 等类名保留,
+                 自动化测试与旧逻辑依赖这些钩子。
+           ========================================================================== */
+        html, body, #app { height: 100%; }
+
+        .login-wrap {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 16% 10%, rgba(107, 45, 79, .95) 0%, transparent 52%),
+                radial-gradient(circle at 84% 80%, rgba(181, 101, 29, .85) 0%, transparent 48%),
+                linear-gradient(135deg, #171026 0%, #2c1233 38%, #4a1733 66%, #77301f 100%);
+        }
+
+        /* 细网格叠加, 消除大面积渐变的色带感 */
+        .login-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 62px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 62px);
+            pointer-events: none;
+        }
+        .login-wrap::before { display: none; }
+
+        /* 漂浮光斑: 琥珀 / 玫瑰 / 松绿 */
+        .lg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(84px);
+            opacity: .5;
+            pointer-events: none;
+            animation: lgFloat 15s ease-in-out infinite;
+        }
+        .lg-orb.o1 { width: 460px; height: 460px; background: #f2a65a; top: -140px; left: -110px; }
+        .lg-orb.o2 { width: 400px; height: 400px; background: #e0567a; bottom: -150px; right: -100px; animation-delay: -5s; }
+        .lg-orb.o3 { width: 300px; height: 300px; background: #2ec4b6; top: 58%; left: 62%; opacity: .34; animation-delay: -9s; }
+        @keyframes lgFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%      { transform: translate(34px, -38px) scale(1.09); }
+        }
+
+        /* 楼房剪影 */
+        .lg-skyline {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 200px;
+            pointer-events: none;
+            background: linear-gradient(to top, rgba(15, 6, 16, .62), rgba(15, 6, 16, 0) 92%);
+        }
+        .lg-skyline svg { position: absolute; bottom: 0; width: 100%; height: 168px; opacity: .5; }
+
+        /* 玻璃拟态主卡片 */
+        .lg-card {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            width: 950px;
+            max-width: 94vw;
+            min-height: 566px;
+            border-radius: 26px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, .085);
+            border: 1px solid rgba(255, 255, 255, .2);
+            box-shadow: 0 34px 90px rgba(16, 4, 18, .62), inset 0 1px 0 rgba(255, 255, 255, .18);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            animation: lgRise .78s cubic-bezier(.21, .9, .3, 1.15) both;
+        }
+        @supports not (backdrop-filter: blur(4px)) {
+            .lg-card { background: rgba(30, 14, 32, .82); }
+        }
+        @keyframes lgRise {
+            from { opacity: 0; transform: translateY(38px) scale(.972); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ---------------- 左侧品牌区(松绿) ---------------- */
+        .login-left {
+            flex: 1.06;
+            padding: 50px 44px 42px;
+            display: flex;
+            flex-direction: column;
+            color: #eef7f4;
+            background:
+                radial-gradient(circle at 82% 8%, rgba(46, 196, 182, .22), transparent 58%),
+                linear-gradient(158deg, rgba(18, 74, 76, .95), rgba(13, 52, 46, .96));
+        }
+        .logo-mark {
+            width: 66px; height: 66px;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 33px; color: #2a1405;
+            background: linear-gradient(140deg, #ffd88a, #f0a63c 55%, #e2703a);
+            box-shadow: 0 14px 32px rgba(226, 112, 58, .45);
+            margin-bottom: 24px;
+        }
+        .login-left h1 {
+            margin: 0 0 12px;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            line-height: 1.2;
+            background: linear-gradient(96deg, #fffaf0 10%, #ffd88a 62%, #f0a63c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-left .brand-bar {
+            width: 62px; height: 4px;
+            border-radius: 4px;
+            margin-bottom: 18px;
+            background: linear-gradient(90deg, #f0a63c, #e0567a);
+        }
+        .login-left .sub {
+            font-size: 13px;
+            line-height: 1.95;
+            color: rgba(216, 240, 234, .78);
+            margin-bottom: 26px;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            font-size: 13.5px;
+            color: rgba(226, 244, 239, .94);
+            margin: 8px 0;
+        }
+        .feature i {
+            width: 28px; height: 28px;
+            margin-right: 11px;
+            border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(240, 166, 60, .18);
+            border: 1px solid rgba(240, 166, 60, .3);
+            color: #ffd88a;
+            font-size: 14px;
+            flex: none;
+        }
+
+        /* 3D 小区地图亮点卡 */
+        .lg-highlight {
+            margin-top: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: linear-gradient(120deg, rgba(240, 166, 60, .16), rgba(224, 86, 122, .12));
+            border: 1px solid rgba(255, 216, 138, .28);
+        }
+        .lg-highlight svg { flex: none; }
+        .lg-highlight .hl-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #ffd88a;
+            margin-bottom: 3px;
+        }
+        .lg-highlight .hl-desc {
+            font-size: 12px;
+            line-height: 1.6;
+            color: rgba(226, 244, 239, .74);
+        }
+
+        /* ---------------- 右侧表单区(暖白) ---------------- */
+        .login-right {
+            flex: 1;
+            padding: 52px 46px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(170deg, #fffdfa 0%, #fdf6ef 100%);
+        }
+        .login-right h2 {
+            margin: 0 0 7px;
+            font-size: 27px;
+            font-weight: 700;
+            color: #35202b;
+            letter-spacing: 1px;
+        }
+        .login-right .tip {
+            font-size: 13px;
+            color: #9b8b84;
+            margin-bottom: 24px;
+        }
+
+        .demo-hint {
+            font-size: 12.5px;
+            line-height: 1.7;
+            color: #9a5b12;
+            background: #fdf2e2;
+            border: 1px solid #f3dcb2;
+            border-left: 3px solid #e2703a;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 18px;
+        }
+        .demo-hint i { margin-right: 4px; }
+        .demo-hint a { color: #d1571f; font-weight: 600; }
+
+        /* 输入框 */
+        .login-right .el-input__inner {
+            height: 48px;
+            line-height: 48px;
+            border-radius: 12px;
+            border-color: #efe2d6;
+            background: #fdf8f3;
+            color: #35202b;
+            padding-left: 42px;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .login-right .el-input__inner::placeholder { color: #bcaba2; }
+        .login-right .el-input__inner:hover { border-color: #e6d3c2; }
+        .login-right .el-input__inner:focus {
+            border-color: #e2703a;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(226, 112, 58, .14);
+        }
+        .login-right .el-input__prefix { left: 12px; color: #c9a58e; }
+        .login-right .el-form-item { margin-bottom: 22px; }
+        .login-right .el-form-item__error { padding-top: 4px; color: #d1571f; }
+
+        /* ---------------- 图形验证码 ---------------- */
+        .lg-captcha { display: flex; align-items: center; gap: 10px; }
+        .lg-captcha > .el-input { flex: 1; }
+        .lg-captcha-img {
+            flex: none;
+            width: 122px;
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid #efe2d6;
+            background: #fdf8f3;
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .lg-captcha-img:hover { border-color: #e2703a; box-shadow: 0 0 0 3px rgba(226, 112, 58, .12); }
+        .lg-captcha-img.placeholder {
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            font-size: 11.5px; line-height: 1.35; color: #bcaba2; letter-spacing: .5px;
+        }
+        /* 出现验证码时说明"为什么突然要填", 避免被当成多余步骤 */
+        .lg-captcha-hint {
+            margin-top: 7px; font-size: 12px; line-height: 1.5; color: #b07a4e;
+            display: flex; align-items: flex-start; gap: 5px;
+        }
+        .lg-captcha-hint i { margin-top: 2px; flex: none; }
+
+        /* 主按钮 */
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 6px;
+            border-radius: 12px;
+            border: none;
+            color: #40200c;
+            background: linear-gradient(100deg, #ffd88a 0%, #f0a63c 46%, #e2703a 100%);
+            box-shadow: 0 12px 26px rgba(226, 112, 58, .34);
+            transition: transform .16s, box-shadow .22s, filter .2s;
+        }
+        .login-btn:hover, .login-btn:focus {
+            color: #40200c;
+            filter: saturate(112%) brightness(1.03);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(226, 112, 58, .44);
+        }
+        .login-btn:active { transform: translateY(0); filter: brightness(.97); }
+
+        /* 演示账号 */
+        .lg-accounts {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px dashed #f0e2d6;
+        }
+        .lg-accounts .lab {
+            font-size: 12px;
+            color: #b3a29a;
+            margin-bottom: 9px;
+        }
+        .lg-chip {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            color: #a4571f;
+            background: #fdf1e4;
+            border: 1px solid #f4e0cc;
+            border-radius: 999px;
+            padding: 4px 12px;
+            margin: 0 8px 8px 0;
+            cursor: pointer;
+            transition: background .15s, transform .15s, box-shadow .15s;
+        }
+        .lg-chip:hover {
+            background: #fbe6d2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(226, 112, 58, .16);
+        }
+        .lg-chip i { margin-right: 4px; color: #d1571f; }
+
+        .login-footer {
+            margin-top: 14px;
+            text-align: center;
+            font-size: 12px;
+            color: #c0b0a8;
+            line-height: 1.9;
+        }
+        .login-footer .sec {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #12a594;
+        }
+
+        @media (max-width: 860px) {
+            .lg-card { flex-direction: column; min-height: auto; }
+            .login-left { display: none; }
+            .login-right { padding: 38px 28px 24px; }
+        }
+    </style>
+</head>
+
+<body data-page-node-id="LaUZMRhgyS2r29cgftWpqi">
+    <div id="app" data-page-node-id="m7UJMjQ7X9xqqawvDI4W63">
+        <div class="login-wrap" data-page-node-id="RYoAo07VuH8sGzulRCqi2H">
+            <!-- 背景装饰: 光斑 + 楼房剪影 -->
+            <div class="lg-orb o1" data-page-node-id="nyOQZMLDQcAETDQXT32PzA"></div>
+            <div class="lg-orb o2" data-page-node-id="8Iq554bAaPsluFgqpRQPFx"></div>
+            <div class="lg-orb o3" data-page-node-id="io00dBqNQBWbCzyw5exXqC"></div>
+            <div class="lg-skyline" data-page-node-id="ZqRIz8WVgpCA3MCwOsAaSk">
+                <svg viewBox="0 0 1200 168" preserveAspectRatio="none" data-page-node-id="zZCnNRT7gq2UFOUlyyl2Uo">
+                    <g fill="#2a1420" data-page-node-id="MV90rSW75tSq9w7i9wVNBp">
+                        <rect x="40" y="66" width="70" height="102" data-page-node-id="xHwYYNkDIMtfCSe7IcAdxg"/>
+                        <rect x="130" y="34" width="56" height="134" data-page-node-id="09RYeeRE7Eoi0TZ9qPBKB7"/>
+                        <rect x="205" y="86" width="80" height="82" data-page-node-id="xPaZZsCoKQph69Af4nqa87"/>
+                        <rect x="320" y="22" width="60" height="146" data-page-node-id="GanPwEic5vWRu3apwBXrre"/>
+                        <rect x="400" y="74" width="74" height="94" data-page-node-id="sszGtgGoExGRqH9f8snSWg"/>
+                        <rect x="520" y="44" width="58" height="124" data-page-node-id="dFkotxKjkzJ654OVx5htjT"/>
+                        <rect x="600" y="94" width="86" height="74" data-page-node-id="qEqztDhaNuVPeGEkpnU5RZ"/>
+                        <rect x="720" y="28" width="64" height="140" data-page-node-id="jZGJr6eftdYepYRe2JNcLs"/>
+                        <rect x="810" y="70" width="70" height="98" data-page-node-id="8botLayazlEWuwuAhg5hGU"/>
+                        <rect x="920" y="40" width="58" height="128" data-page-node-id="Cx0vyK1mR3gF79cH09uwsK"/>
+                        <rect x="1000" y="82" width="84" height="86" data-page-node-id="6Hl6kgz3brXUHrmXDYSVzk"/>
+                        <rect x="1110" y="52" width="62" height="116" data-page-node-id="gMFXGX9EkkO5vGzTZLLabi"/>
+                    </g>
+                    <g fill="#ffd88a" opacity=".85" data-page-node-id="Kije9lKjzDkb4alRx6PZYD">
+                        <rect x="58" y="80" width="8" height="8" data-page-node-id="bTvRND9P10QYI9qU1puJof"/><rect x="78" y="100" width="8" height="8" data-page-node-id="6xAr60AWwrx5Jo3H5EeyHX"/>
+                        <rect x="146" y="52" width="7" height="7" data-page-node-id="CRgWEsWGCcpcw4GoUBCHRk"/><rect x="164" y="76" width="7" height="7" data-page-node-id="fttbaHkh0ij8OL0JWTYf3n"/>
+                        <rect x="338" y="42" width="7" height="7" data-page-node-id="8rjGXFSAQ2GVHbkxpkiZwA"/><rect x="356" y="92" width="7" height="7" data-page-node-id="sfSsKFex2vgSUtJZunQiGv"/>
+                        <rect x="538" y="64" width="7" height="7" data-page-node-id="bJsr0wsb3qNNh54BMu5UXW"/><rect x="738" y="48" width="7" height="7" data-page-node-id="onKwrilvkyLl3B7mANU6g7"/>
+                        <rect x="828" y="90" width="7" height="7" data-page-node-id="kXuAVILA5QgllGehGzEmOr"/><rect x="938" y="60" width="7" height="7" data-page-node-id="GAIDSc5MncYNhXUc2myypO"/>
+                        <rect x="1022" y="98" width="8" height="8" data-page-node-id="3ZN6spgGxhyiGbD57Ta7jU"/><rect x="1126" y="70" width="7" height="7" data-page-node-id="4zpiKk3NiJ7HIlOW6VQwTH"/>
+                        <rect x="230" y="106" width="7" height="7" data-page-node-id="BfRG1bErx35Nlp5L20i3yx"/><rect x="430" y="94" width="7" height="7" data-page-node-id="O33tWLxAoKMsHQPw5jAn4F"/>
+                        <rect x="620" y="112" width="7" height="7" data-page-node-id="RrLDAUKlN2l7u6qtQfjGhq"/><rect x="860" y="90" width="7" height="7" data-page-node-id="uPylzkzdlVo1X5Ng1aRBKW"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="lg-card" data-page-node-id="a6EwkAzLfG0W07GocvwYGM">
+                <!-- ============ 左侧: 品牌与亮点 ============ -->
+                <div class="login-left" data-page-node-id="mK0Uer237j1sAf6GxBW1UW">
+                    <div class="logo-mark" data-page-node-id="EwTQcsdo7AgBcwPvxtbbcP">
+                        <i class="el-icon-office-building" data-page-node-id="JKCAvhRQnM5TzoCJnm9rFF"></i>
+                    </div>
+                    <h1 data-page-node-id="zkoaeQaK3iBf1KSCqT1b89">物业管理系统</h1>
+                    <div class="brand-bar" data-page-node-id="2HYPQQIOlCcso4szZHPuHY"></div>
+                    <div class="sub" data-page-node-id="vkP5fA5OMdv3XcKVJUh9er">
+                        Property Management System<br data-page-node-id="oDii1IH25nN9OrLVCiZyC8">
+                        小区楼栋 · 人员档案 · 物业收费 · 车位停车 · 报修服务
+                    </div>
+
+                    <div class="feature" data-page-node-id="w6TgdPjnLQCWhnRVSmgbW3"><i class="el-icon-house" data-page-node-id="OMhxhIcg6mJSXAqEz0vV2v"></i>楼栋房屋与人员信息一体化管理</div>
+                    <div class="feature" data-page-node-id="20i7rWWeO372f8izDVs8eq"><i class="el-icon-money" data-page-node-id="waA7LyMstz7IdvpSByfWlR"></i>物业费账单自动生成与在线收缴</div>
+                    <div class="feature" data-page-node-id="8xMGGf11aU3o75ITAZEHYN"><i class="el-icon-truck" data-page-node-id="vJZ6dfhjykHvIPCzbb0uw3"></i>小区内外车位管理与临时停车计费</div>
+                    <div class="feature" data-page-node-id="D8V4fQwhMGbD9YCGzcuQVD"><i class="el-icon-tools" data-page-node-id="A1Eo87yB92Wlaq7P0mOmGE"></i>报修工单派单流转与满意度评价</div>
+
+                    <!-- 3D 小区地图亮点 -->
+                    <div class="lg-highlight" data-page-node-id="lVjW9ABcvFxlL1IFgylTtp">
+                        <svg width="64" height="52" viewBox="0 0 64 52" data-page-node-id="sMYSrQ7JNAwJUZ6CY9L77F">
+                            <polygon points="32,4 60,18 32,32 4,18" fill="#3fbfae" opacity=".9" data-page-node-id="V3RoGFmDaQAc6wkRSTpmLt"/>
+                            <polygon points="4,18 32,32 32,50 4,36" fill="#2a8f83" data-page-node-id="HmjUYLO32kvwj6XKpYuTJG"/>
+                            <polygon points="60,18 32,32 32,50 60,36" fill="#1f6f68" data-page-node-id="c5jWUn4DlysZaouDpB3Q2e"/>
+                            <polygon points="16,12 30,5 44,12 30,19" fill="#ffd88a" opacity=".85" data-page-node-id="rEsnIEvKmSkEaS0BkfGlVg"/>
+                        </svg>
+                        <div data-page-node-id="9Qyhl2C1JkCvSaRcKmqbob">
+                            <div class="hl-title" data-page-node-id="bmOrcwHi6pUzdgAzzoQtAY">3D 小区地图</div>
+                            <div class="hl-desc" data-page-node-id="iMKW2g6iLjiB9DylOMyVX5">楼层立体模型，点击楼栋直达房间；业主登录即定位到自己家</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ 右侧: 登录表单 ============ -->
+                <div class="login-right" data-page-node-id="aOfWJcpEXGOFloOP5aleHh">
+                    <h2 data-page-node-id="LO1EYVpHmcCZYIyG2sBDbd">欢迎登录</h2>
+                    <div class="tip" data-page-node-id="A0uSo7IqSXpARyc6NEaNlF">请使用物业系统账号登录，业主账号可查看自己房间的信息</div>
+
+                    <div class="demo-hint" v-if="showDemoHint" data-page-node-id="sW4k0PXIsKOUFBzWGfbO0N">
+                        <i class="el-icon-warning-outline" data-page-node-id="x7KuZ0CYwmSgSlrTH93nGL"></i>
+                        无法连接后端服务（{{ baseURL }}）。请先启动后端再登录，本系统不再使用本地演示数据。
+                        <a href="javascript:;" @click="probeBackend" data-page-node-id="XA6TKNLJIV3m9NtpwuQlh7">重试连接</a>
+                    </div>
+
+                    <el-form :model="form" :rules="rules" ref="loginForm" @submit.native.prevent data-page-node-id="tE6T8VNF47IDivn1X4XLQQ">
+                        <el-form-item prop="username" data-page-node-id="rM0YjWSpDxr0hl7wuSGot2">
+                            <el-input v-model="form.username" placeholder="请输入登录账号" prefix-icon="el-icon-user"
+                                size="large" clearable :disabled="loading"
+                                @keyup.enter.native="doLogin" data-page-node-id="aC9pY7fzNf6e0fXCTQvH8Y"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="password" data-page-node-id="EZetbSlAD5fWsLAPo3KuCu">
+                            <el-input v-model="form.password" type="password" placeholder="请输入登录密码"
+                                prefix-icon="el-icon-lock" size="large" show-password :disabled="loading"
+                                @keyup.enter.native="doLogin" data-page-node-id="wiApLgWVwxhjccA9FLyazI"></el-input>
+                        </el-form-item>
+
+                        <!--
+                            图形验证码: 平时不显示, 也不参与校验。
+                            只有后端判定"本次登录有风险"时(连续失败达阈值, 返回 code=428)才自动出现;
+                            一旦出现就是必填项, 空着提交会被拦下, 无法跳过。
+                        -->
+                        <el-form-item v-if="captchaVisible" prop="captchaCode">
+                            <div class="lg-captcha">
+                                <el-input v-model="form.captchaCode" placeholder="请输入右侧验证码"
+                                    prefix-icon="el-icon-picture-outline" size="large" maxlength="4"
+                                    :disabled="loading" @keyup.enter.native="doLogin"></el-input>
+                                <img v-if="captcha.image" class="lg-captcha-img" :src="captcha.image"
+                                    title="看不清？点击换一张" alt="图形验证码" @click="loadCaptcha">
+                                <div v-else class="lg-captcha-img placeholder" @click="loadCaptcha">加载失败<br>点击重试</div>
+                            </div>
+                            <div class="lg-captcha-hint">
+                                <i class="el-icon-warning-outline"></i>
+                                连续登录失败多次，需先通过图形验证码校验（点击图片可换一张）
+                            </div>
+                        </el-form-item>
+
+                        <el-button type="primary" class="login-btn" :loading="loading" @click="doLogin" data-page-node-id="uuoSYHrWFhDQpfqM8GfjBE">
+                            {{ loading ? '登录中...' : '登 录' }}
+                        </el-button>
+                    </el-form>
+
+                    <div class="lg-accounts" data-page-node-id="tnHHQBhQhu4dZA23PLjVlJ">
+                        <div class="lab" data-page-node-id="qHz6UxEc4w0JH0Vpnm9rhm">演示账号（点击自动填充，密码均为 123456）</div>
+                        <span class="lg-chip" @click="fill('admin')" data-page-node-id="d9nf8v29lrpyWxlyzLRZGF"><i class="el-icon-user-solid" data-page-node-id="CDeplwoCpzri3dYHi8aw1s"></i>admin · 管理员</span>
+                        <span class="lg-chip" @click="fill('wuye01')" data-page-node-id="GdstA11TB5NYd2JcbFKf5z"><i class="el-icon-s-custom" data-page-node-id="I2hF8PH5hEriULgW4O62m7"></i>wuye01 · 物业</span>
+                        <span class="lg-chip" @click="fill('yeye01')" data-page-node-id="0fGdqQKhxgDAzDNSUq8Cmq"><i class="el-icon-s-home" data-page-node-id="cE0FKvH81nKgfk9241qGBE"></i>yeye01 · 业主</span>
+                        <span class="lg-chip" @click="fill('yeye02')" data-page-node-id="i2PL5XiegTUpdteVtcVih3"><i class="el-icon-s-home" data-page-node-id="yhkP8RXnArrDtk1phRcs3W"></i>yeye02 · 业主</span>
+                    </div>
+
+                    <div class="login-footer" data-page-node-id="bxc8vGXbGC73k3h8PALS5u">
+                        © 2026 阳光家园物业服务中心
+                        <br data-page-node-id="JGh80khUtRSYbFblEOfJJP">
+                        <span class="sec" data-page-node-id="QV8XRnb51ohTNlhSoi1N3w"><i class="el-icon-lock" data-page-node-id="ghRWpTrC9psMDARAdDQynu"></i>业主账号仅可见自己房间的数据</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="libs/vue.min.js"></script>
+    <script src="libs/element-ui.js"></script>
+    <script src="libs/axios.min.js"></script>
+    <!-- 部署环境配置：前后端不同域名时改这一个文件（必须在 config.js 之前加载） -->
+    <script src="js/env.js"></script>
+    <script src="js/config.js"></script>
+    <!-- mock.js 提供演示模式下的本地数据(Mock.handle), 登录页在离线演示时也需要 -->
+    <script src="js/mock.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    loading: false,
+                    showDemoHint: false,
+                    baseURL: AppConfig.baseURL,
+                    // 图形验证码: 默认收起, 后端要求时(或用户主动点击)展开
+                    captchaVisible: false,
+                    captcha: { id: '', image: '' },
+                    form: {
+                        username: 'admin',
+                        password: '123456',
+                        captchaCode: ''
+                    },
+                    rules: {
+                        username: [{ required: true, message: '请输入登录账号', trigger: 'blur' }],
+                        password: [{ required: true, message: '请输入登录密码', trigger: 'blur' }]
+                    }
+                };
+            },
+            created() {
+                // 启动时探测后端, 并每 5 秒重试一次(后端后启动也能自动切回真实数据)
+                this.probeBackend();
+                this._probeTimer = setInterval(() => {
+                    if (this.showDemoHint) this.probeBackend(true);
+                }, 5000);
+            },
+            beforeDestroy() {
+                clearInterval(this._probeTimer);
+            },
+            methods: {
+                // 探测后端:
+                //  - 在线 -> 清除遗留的演示模式标记(避免之前的改动被 Mock 吞掉, 例如改密码"成功"却没落库)
+                //  - 离线 -> 提示"无法连接后端服务"(默认不再降级为演示数据)
+                probeBackend(silent) {
+                    return Api.ping().then(ok => {
+                        this.showDemoHint = !ok;
+                        if (ok) {
+                            if (DemoMode.isOn()) {
+                                DemoMode.disable();
+                                this.$message.success('已连接后端服务，使用真实数据');
+                            } else if (!silent) {
+                                this.$message.success('已连接后端服务');
+                            }
+                        } else if (AppConfig.allowDemo) {
+                            // 仅显式开启演示模式时才降级
+                            DemoMode.enable();
+                        }
+                    });
+                },
+                fill(username) {
+                    this.form.username = username;
+                    this.form.password = '123456';
+                },
+                /* ---------------- 图形验证码 ---------------- */
+                // 展示验证码并拉一张新图。只由 doLogin 在收到后端 428 时调用:
+                // 平时不显示, 也不存在"手动开启/收起"入口, 避免让人误以为验证码是可选项。
+                revealCaptcha() {
+                    this.captchaVisible = true;
+                    return this.loadCaptcha();
+                },
+                loadCaptcha() {
+                    return Api.captcha().then(res => {
+                        this.captcha = {
+                            id: res.data.captchaId,
+                            image: res.data.image
+                        };
+                        this.form.captchaCode = '';
+                    }).catch(err => {
+                        this.captcha = { id: '', image: '' };
+                        this.$message({ type: 'warning', message: '验证码加载失败：' + (err.message || ''), grouping: true });
+                    });
+                },
+                doLogin() {
+                    // 防重入: 请求未返回前(后端不可达时最长要等 8 秒)用户再按回车或再点按钮,
+                    // 一律忽略; 否则会重复提交并弹出多条一模一样的错误提示。
+                    if (this.loading) return;
+                    // 验证码是条件必填, 不走 el-form 静态规则, 这里手动校验
+                    if (this.captchaVisible && !this.form.captchaCode.trim()) {
+                        this.$message.warning('请输入图形验证码');
+                        return;
+                    }
+                    this.$refs.loginForm.validate(valid => {
+                        if (!valid) return;
+                        this.loading = true;
+                        Api.login(this.form.username, this.form.password,
+                            this.captchaVisible ? this.captcha.id : '',
+                            this.captchaVisible ? this.form.captchaCode.trim() : '')
+                            .then(res => {
+                                localStorage.setItem('pms_token', res.data.token);
+                                localStorage.setItem('pms_user', JSON.stringify(res.data.user));
+                                // 记录令牌到期时间, 主界面据此自动续期
+                                if (res.data.expiresIn) {
+                                    localStorage.setItem('pms_token_exp',
+                                        String(Date.now() + res.data.expiresIn * 1000));
+                                }
+                                this.$message.success('登录成功，正在进入系统...');
+                                setTimeout(() => {
+                                    location.href = 'main.html';
+                                }, 500);
+                            })
+                            .catch(err => {
+                                // 428: 后端判定本次登录有风险, 必须带验证码 -> 自动展开并换一张新图
+                                if (err.code === 428) {
+                                    this.revealCaptcha().then(() => {
+                                        this.$message({ type: 'warning', message: err.message, grouping: true });
+                                    });
+                                    return;
+                                }
+                                // 429: 失败次数过多被临时锁定, 同样把验证码放出来, 锁定解除后可直接重试
+                                if (err.code === 429 && !this.captchaVisible) {
+                                    this.revealCaptcha();
+                                }
+                                // grouping: 内容相同的提示自动合并(Element UI 内置能力), 避免叠一屏
+                                this.$message({ type: 'error', message: err.message || '登录失败', grouping: true });
+                                // 验证码是一次性的, 任何一次失败后都要换新图
+                                if (this.captchaVisible) this.loadCaptcha();
+                            })
+                            .finally(() => {
+                                this.loading = false;
+                            });
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

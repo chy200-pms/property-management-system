@@ -1,0 +1,59 @@
+# ============================================================
+#  Render 部署蓝图（免费方案：后端容器托管）
+#
+#  用法：
+#    1. 把本项目推到 GitHub（公开或私有都行）
+#    2. 打开 https://dashboard.render.com/blueprints
+#       → New Blueprint Instance → 选这个仓库
+#    3. Render 会读这个文件，自动建好下面这个 Web Service
+#    4. 首次会要你填几个 sync: false 的变量（数据库连接、密钥），见 DEPLOY-FREE.md
+#
+#  说明：
+#    · plan: free —— 512MB 内存 / 0.1 CPU / 每月 750 小时，闲置 15 分钟后休眠，
+#      下次访问约 30~60 秒冷启动。
+#    · 镜像用 backend/Dockerfile.paas（容器内 Maven 现场编译），
+#      所以不需要你把 jar 提交到仓库。
+#    · 数据库不在 Render 上：Render 免费层只有 PostgreSQL 且 30 天过期，
+#      本项目要 MySQL，这里配的是外部的免费 MySQL（见 DEPLOY-FREE.md）。
+# ============================================================
+
+services:
+  - type: web
+    name: pms-backend
+    runtime: docker
+    plan: free
+    # 新加坡离国内最近；若创建失败可换成 oregon / frankfurt
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile.paas
+    dockerContext: ./backend
+    # 用无需登录态的公开接口探活（健康检查失败会自动重启实例）
+    healthCheckPath: /api/auth/captcha
+    envVars:
+      # ---------- 数据库（填 Aiven 免费 MySQL 的连接信息）----------
+      # 注意结尾的 sslMode=REQUIRED：Aiven 强制 TLS，写成 useSSL=false 会连不上。
+      # 形如：
+      # jdbc:mysql://mysql-xxxx-xxxx.aivencloud.com:12345/defaultdb?sslMode=REQUIRED&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # ---------- 安全（生产必改项）----------
+      # Render 自动生成一个随机值，不要手工写死
+      - key: JWT_SECRET
+        generateValue: true
+      # 验证码答案永不回显（默认值 local 会把答案回显给客户端，仅适合本机测试）
+      - key: CAPTCHA_ECHO_MODE
+        value: "false"
+
+      # ---------- 小规格实例调优 ----------
+      # 免费层内存仅 512MB，且免费数据库 max_connections 很小，连接池要收窄
+      - key: DB_POOL_MIN_IDLE
+        value: "1"
+      - key: DB_POOL_MAX
+        value: "5"
+
+      - key: TZ
+        value: Asia/Shanghai

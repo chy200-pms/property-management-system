@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.BuildingMapper">
+
+    <sql id="baseCols">
+        b.id, b.building_no, b.name, b.unit_count, b.floor_count, b.house_count,
+        b.building_type, b.build_year, b.total_area, b.manager, b.manager_phone,
+        b.remark, b.create_time
+    </sql>
+
+    <!-- 列表查询: 同时统计每栋楼的入住/空置情况 -->
+    <sql id="listCols">
+        <include refid="baseCols"/>,
+        (SELECT COUNT(*) FROM house h WHERE h.building_id = b.id AND h.status IN ('OCCUPIED','RENTED')) AS occupied_count,
+        (SELECT COUNT(*) FROM house h WHERE h.building_id = b.id AND h.status = 'EMPTY') AS empty_count,
+        CONCAT(ROUND(
+            IFNULL((SELECT COUNT(*) FROM house h WHERE h.building_id = b.id AND h.status IN ('OCCUPIED','RENTED')), 0)
+            / GREATEST((SELECT COUNT(*) FROM house h WHERE h.building_id = b.id), 1) * 100, 1), '%') AS occupancy_rate
+    </sql>
+
+    <select id="selectById" resultType="Building">
+        SELECT <include refid="baseCols"/>
+        FROM building b
+        WHERE b.id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Building">
+        SELECT <include refid="listCols"/>
+        FROM building b
+        <where>
+            <if test="q.id != null">AND b.id = #{q.id}</if>
+            <if test="q.buildingNo != null and q.buildingNo != ''">
+                AND b.building_no = #{q.buildingNo}
+            </if>
+            <if test="q.buildingType != null and q.buildingType != ''">
+                AND b.building_type = #{q.buildingType}
+            </if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (b.building_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR b.name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR b.manager LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY b.id ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM building b
+        <where>
+            <if test="q.id != null">AND b.id = #{q.id}</if>
+            <if test="q.buildingNo != null and q.buildingNo != ''">AND b.building_no = #{q.buildingNo}</if>
+            <if test="q.buildingType != null and q.buildingType != ''">AND b.building_type = #{q.buildingType}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (b.building_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR b.name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR b.manager LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO building
+        (building_no, name, unit_count, floor_count, house_count, building_type,
+         build_year, total_area, manager, manager_phone, remark, create_time)
+        VALUES
+        (#{buildingNo}, #{name}, #{unitCount}, #{floorCount}, #{houseCount}, #{buildingType},
+         #{buildYear}, #{totalArea}, #{manager}, #{managerPhone}, #{remark}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE building
+        <set>
+            <if test="buildingNo != null and buildingNo != ''">building_no = #{buildingNo},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="unitCount != null">unit_count = #{unitCount},</if>
+            <if test="floorCount != null">floor_count = #{floorCount},</if>
+            <if test="houseCount != null">house_count = #{houseCount},</if>
+            <if test="buildingType != null and buildingType != ''">building_type = #{buildingType},</if>
+            <if test="buildYear != null">build_year = #{buildYear},</if>
+            <if test="totalArea != null">total_area = #{totalArea},</if>
+            <if test="manager != null">manager = #{manager},</if>
+            <if test="managerPhone != null">manager_phone = #{managerPhone},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM building WHERE id = #{id}
+    </delete>
+
+    <!-- 楼栋房屋入住情况统计 -->
+    <select id="countHouseByBuilding" resultType="map">
+        SELECT b.id AS buildingId,
+               b.building_no AS buildingNo,
+               COUNT(h.id) AS totalHouse,
+               SUM(CASE WHEN h.status IN ('OCCUPIED','RENTED') THEN 1 ELSE 0 END) AS occupiedHouse,
+               SUM(CASE WHEN h.status = 'EMPTY' THEN 1 ELSE 0 END) AS emptyHouse
+        FROM building b
+        LEFT JOIN house h ON h.building_id = b.id
+        GROUP BY b.id, b.building_no
+        ORDER BY b.id
+    </select>
+
+</mapper>

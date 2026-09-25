@@ -1,0 +1,12 @@
+# 后端镜像构建只需要 target 下的 jar，其余一律不进上下文（加快构建、避免泄露源码）
+src/
+.idea/
+*.iml
+*.log
+.git/
+.gitignore
+target/classes/
+target/test-classes/
+target/maven-*
+target/*.jar.original
+target/*.jar.original

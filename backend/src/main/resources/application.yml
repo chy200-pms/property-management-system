@@ -1,0 +1,96 @@
+server:
+  # 端口取值优先级：SERVER_PORT → PORT → 8080
+  #   SERVER_PORT：本项目一直用的环境变量（2-启动后端.bat / docker-compose 走这个）
+  #   PORT       ：PaaS 平台的通用约定（Render / Koyeb / Heroku 会注入随机端口），
+  #                由启动类 PropertyApplication.applyPaasPort() 处理，见那里的注释
+  #   ⚠️ 不要写成 ${SERVER_PORT:${PORT:8080}} —— 嵌套默认值实测会被解析成空串，
+  #      导致 server.port 绑不上整数、Tomcat 退回随机端口（连本机启动都会坏）。
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: property-management-system
+  # ==================== 数据源配置 ====================
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 数据库名 property_db, 账号密码请按本机实际情况修改
+    # 支持通过环境变量覆盖(启动脚本会用到), 未设置时使用下方默认值
+    url: ${DB_URL:jdbc:mysql://localhost:3306/property_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    hikari:
+      # 免费/小规格实例建议调小（如 Render 免费层 512MB 内存、Aiven 免费 MySQL
+      # max_connections 仅 76）：DB_POOL_MIN_IDLE=1  DB_POOL_MAX=5
+      # 默认值与改动前完全一致，不影响本机与docker-compose 的现有行为。
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      maximum-pool-size: ${DB_POOL_MAX:20}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: always
+  mvc:
+    format:
+      date: yyyy-MM-dd
+
+# ==================== 安全相关配置 ====================
+security:
+  jwt:
+    # JWT 签名密钥: 生产环境务必通过环境变量 JWT_SECRET 注入随机长串(≥32位)
+    secret: ${JWT_SECRET:pms-local-dev-secret-please-override-in-production-2026}
+    # 令牌有效期(分钟)
+    ttl-minutes: ${JWT_TTL_MINUTES:120}
+    # 剩余有效期少于该值时可滑动续期(分钟)
+    refresh-ahead-minutes: 15
+  captcha:
+    # 验证码有效期(秒)
+    ttl-seconds: 300
+    # 答案回显策略:
+    #   false — 永不回显(生产环境)
+    #   local — 仅当请求来自本机回环地址时回显(默认, 供本机自动化测试做两步握手)
+    #   true  — 总是回显(仅限本地开发排障, 绝不可用于线上)
+    echo-answer: ${CAPTCHA_ECHO_MODE:local}
+  login:
+    # 同一账号+IP 连续失败多少次后开始要求图形验证码
+    captcha-threshold: 3
+    # 连续失败多少次后临时锁定
+    lock-threshold: 6
+    # 锁定时长(分钟)
+    lock-minutes: 10
+    # 失败计数统计窗口(分钟)
+    window-minutes: 10
+  oplog:
+    # 是否开启操作日志
+    enabled: true
+    # 日志保留天数, 超期每天凌晨自动清理
+    keep-days: 30
+
+# ==================== MyBatis 配置 ====================
+mybatis:
+  # Mapper XML 文件位置
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类别名包
+  type-aliases-package: com.property.entity
+  configuration:
+    # 开启驼峰命名自动映射: 数据库 create_time -> 实体 createTime
+    map-underscore-to-camel-case: true
+    # 开启二级缓存
+    cache-enabled: true
+    # 打印 SQL 日志(开发调试用)
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# ==================== 日志 ====================
+logging:
+  level:
+    root: info
+    com.property: debug
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

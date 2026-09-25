@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.ComplaintMapper">
+
+    <sql id="baseCols">
+        id, complaint_no, owner_id, owner_name, phone, house_no, complaint_type,
+        title, content, status, handler, reply, handle_time, create_time
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.ownerId != null">AND owner_id = #{q.ownerId}</if>
+            <if test="q.status != null and q.status != ''">AND status = #{q.status}</if>
+            <if test="q.complaintType != null and q.complaintType != ''">AND complaint_type = #{q.complaintType}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (complaint_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR title LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR owner_name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR house_no LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="Complaint">
+        SELECT <include refid="baseCols"/> FROM complaint WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Complaint">
+        SELECT <include refid="baseCols"/>
+        FROM complaint
+        <include refid="whereCondition"/>
+        ORDER BY create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM complaint
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO complaint
+        (complaint_no, owner_id, owner_name, phone, house_no, complaint_type,
+         title, content, status, handler, reply, handle_time, create_time)
+        VALUES
+        (#{complaintNo}, #{ownerId}, #{ownerName}, #{phone}, #{houseNo}, IFNULL(#{complaintType}, 'OTHER'),
+         #{title}, #{content}, IFNULL(#{status}, 'PENDING'), #{handler}, #{reply}, #{handleTime},
+         IFNULL(#{createTime}, NOW()))
+    </insert>
+
+    <update id="updateById">
+        UPDATE complaint
+        <set>
+            <if test="complaintType != null and complaintType != ''">complaint_type = #{complaintType},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="handler != null">handler = #{handler},</if>
+            <if test="reply != null">reply = #{reply},</if>
+            <if test="handleTime != null">handle_time = #{handleTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM complaint WHERE id = #{id}
+    </delete>
+
+    <select id="countGroupByStatus" resultType="map">
+        SELECT status AS name, COUNT(*) AS value
+        FROM complaint
+        GROUP BY status
+    </select>
+
+    <select id="countGroupByType" resultType="map">
+        SELECT complaint_type AS name, COUNT(*) AS value
+        FROM complaint
+        GROUP BY complaint_type
+        ORDER BY value DESC
+    </select>
+
+</mapper>

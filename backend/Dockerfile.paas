@@ -1,0 +1,58 @@
+# ============================================================
+#  物业管理系统 —— 后端镜像（PaaS / 从 Git 直接构建版）
+#
+#  和 backend/Dockerfile 的区别：
+#    那个是「先在开发机把 jar 打好，再 COPY 进镜像」，适合自己的服务器
+#    （docker-compose 用的就是它）。
+#    这个是「在容器里用 Maven 现场编译」，适合 Render / Koyeb / Northflank
+#    这类从 Git 仓库拉代码自己构建、你没法先塞一个 jar 上去的平台。
+#
+#  构建上下文是 backend/（不是项目根）：
+#     docker build -f backend/Dockerfile.paas -t pms-backend:paas backend
+#
+#  Render 上不需要手敲命令，仓库根目录的 render.yaml 已经配好了。
+# ============================================================
+
+# ---------- 阶段 1：编译 ----------
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /src
+
+# 先单独拷 pom.xml 预热依赖：以后只改源码时这一层能命中缓存，构建快得多。
+# 末尾的 || true 是刻意的 —— dependency:go-offline 偶尔会因个别插件解析失败而报错，
+# 那不该让整个镜像构建挂掉（依赖真正缺失会在下一步 package 时暴露出来）。
+COPY pom.xml .
+RUN mvn -B -q -DskipTests dependency:go-offline || true
+
+COPY src ./src
+RUN mvn -B -q clean package -DskipTests
+
+# ---------- 阶段 2：运行 ----------
+FROM eclipse-temurin:17-jre-jammy
+
+# 验证码所需的系统依赖（与 backend/Dockerfile 保持一致，别删）：
+# CaptchaService 用 AWT 在内存里画 PNG，缺 fontconfig/字体会出现
+# 「验证码图片空白或方块」、或 AWT 尝试连 X server 直接抛异常。
+# curl 用于排查问题（PaaS 的健康检查走 HTTP，不依赖它）。
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      fontconfig \
+      fonts-dejavu-core \
+      curl \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY --from=build /src/target/property-management-system-*.jar /app/app.jar
+
+# 端口由 application.yml 决定：SERVER_PORT → PORT → 8080
+#   PaaS 会自动注入 PORT（随机值），所以这里不要写死 --server.port，
+#   否则会把平台分配的端口覆盖掉，健康检查必然失败。
+#
+# MaxRAMPercentage=75：按容器内存自动算堆大小（Render 免费层 512MB → 约 384MB 堆）。
+#   如果实例内存更小或遇到 OOM，可在平台的环境变量里覆盖 JAVA_OPTS，
+#   例如：-Djava.awt.headless=true -Xmx256m -XX:+UseSerialGC
+ENV JAVA_OPTS="-Djava.awt.headless=true -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -XX:MaxRAMPercentage=75 -XX:+UseSerialGC" \
+    TZ=Asia/Shanghai
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

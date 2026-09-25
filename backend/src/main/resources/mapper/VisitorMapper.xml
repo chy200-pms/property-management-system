@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.VisitorMapper">
+
+    <sql id="baseCols">
+        id, visitor_name, phone, visit_owner_id, visit_owner, house_no, visit_reason,
+        car_plate, visit_time, leave_time, status, register
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.visitOwnerId != null">AND visit_owner_id = #{q.visitOwnerId}</if>
+            <if test="q.status != null and q.status != ''">AND status = #{q.status}</if>
+            <if test="q.visitReason != null and q.visitReason != ''">AND visit_reason = #{q.visitReason}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (visitor_name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR phone LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR visit_owner LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR car_plate LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR house_no LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="Visitor">
+        SELECT <include refid="baseCols"/> FROM visitor WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Visitor">
+        SELECT <include refid="baseCols"/>
+        FROM visitor
+        <include refid="whereCondition"/>
+        ORDER BY visit_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM visitor
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO visitor
+        (visitor_name, phone, visit_owner_id, visit_owner, house_no, visit_reason,
+         car_plate, visit_time, leave_time, status, register)
+        VALUES
+        (#{visitorName}, #{phone}, #{visitOwnerId}, #{visitOwner}, #{houseNo}, #{visitReason},
+         #{carPlate}, IFNULL(#{visitTime}, NOW()), #{leaveTime}, IFNULL(#{status}, 'IN'), #{register})
+    </insert>
+
+    <update id="updateById">
+        UPDATE visitor
+        <set>
+            <if test="visitorName != null and visitorName != ''">visitor_name = #{visitorName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="visitOwnerId != null">visit_owner_id = #{visitOwnerId},</if>
+            <if test="visitOwner != null">visit_owner = #{visitOwner},</if>
+            <if test="houseNo != null">house_no = #{houseNo},</if>
+            <if test="visitReason != null">visit_reason = #{visitReason},</if>
+            <if test="carPlate != null">car_plate = #{carPlate},</if>
+            <if test="visitTime != null">visit_time = #{visitTime},</if>
+            <if test="leaveTime != null">leave_time = #{leaveTime},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM visitor WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.TempParkingMapper">
+
+    <sql id="baseCols">
+        id, record_no, car_plate, car_type, space_no, park_type, entry_time, exit_time,
+        duration, fee, paid_fee, pay_status, pay_method, pay_time, gate, operator, remark
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.carPlate != null and q.carPlate != ''">AND car_plate = #{q.carPlate}</if>
+            <if test="q.parkType != null and q.parkType != ''">AND park_type = #{q.parkType}</if>
+            <if test="q.carType != null and q.carType != ''">AND car_type = #{q.carType}</if>
+            <if test="q.payStatus != null and q.payStatus != ''">AND pay_status = #{q.payStatus}</if>
+            <if test="q.remark != null and q.remark != ''">AND remark = #{q.remark}</if>
+            <if test="q.beginDate != null">AND entry_time &gt;= #{q.beginDate}</if>
+            <if test="q.endDate != null">AND entry_time &lt;= CONCAT(#{q.endDate}, ' 23:59:59')</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (car_plate LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR record_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR gate LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="TempParking">
+        SELECT <include refid="baseCols"/> FROM temp_parking WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="TempParking">
+        SELECT <include refid="baseCols"/>
+        FROM temp_parking
+        <include refid="whereCondition"/>
+        ORDER BY entry_time DESC, id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM temp_parking
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO temp_parking
+        (record_no, car_plate, car_type, space_no, park_type, entry_time, exit_time,
+         duration, fee, paid_fee, pay_status, pay_method, pay_time, gate, operator, remark)
+        VALUES
+        (#{recordNo}, #{carPlate}, IFNULL(#{carType}, '小型车'), #{spaceNo},
+         IFNULL(#{parkType}, 'OUTSIDE'), IFNULL(#{entryTime}, NOW()), #{exitTime},
+         IFNULL(#{duration}, 0), IFNULL(#{fee}, 0), IFNULL(#{paidFee}, 0),
+         IFNULL(#{payStatus}, 'UNPAID'), #{payMethod}, #{payTime}, #{gate}, #{operator}, #{remark})
+    </insert>
+
+    <update id="updateById">
+        UPDATE temp_parking
+        <set>
+            <if test="carPlate != null and carPlate != ''">car_plate = #{carPlate},</if>
+            <if test="carType != null and carType != ''">car_type = #{carType},</if>
+            <if test="spaceNo != null">space_no = #{spaceNo},</if>
+            <if test="parkType != null and parkType != ''">park_type = #{parkType},</if>
+            <if test="entryTime != null">entry_time = #{entryTime},</if>
+            <if test="exitTime != null">exit_time = #{exitTime},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="fee != null">fee = #{fee},</if>
+            <if test="paidFee != null">paid_fee = #{paidFee},</if>
+            <if test="payStatus != null and payStatus != ''">pay_status = #{payStatus},</if>
+            <if test="payMethod != null">pay_method = #{payMethod},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="gate != null">gate = #{gate},</if>
+            <if test="operator != null">operator = #{operator},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM temp_parking WHERE id = #{id}
+    </delete>
+
+    <select id="countGroupByParkType" resultType="map">
+        SELECT park_type AS name,
+               COUNT(*) AS value,
+               IFNULL(SUM(fee), 0) AS fee,
+               IFNULL(SUM(paid_fee), 0) AS paidFee
+        FROM temp_parking
+        GROUP BY park_type
+    </select>
+
+    <select id="sumTodayFee" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(paid_fee), 0)
+        FROM temp_parking
+        WHERE DATE(entry_time) = CURDATE()
+    </select>
+
+    <select id="findInParkingByPlate" resultType="TempParking">
+        SELECT <include refid="baseCols"/>
+        FROM temp_parking
+        WHERE car_plate = #{carPlate}
+          AND exit_time IS NULL
+        ORDER BY entry_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 在场车辆(尚未出场) -->
+    <select id="listInParking" resultType="TempParking">
+        SELECT <include refid="baseCols"/>
+        FROM temp_parking
+        WHERE exit_time IS NULL
+        ORDER BY entry_time DESC
+    </select>
+
+</mapper>

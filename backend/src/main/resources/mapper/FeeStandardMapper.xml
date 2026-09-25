@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.FeeStandardMapper">
+
+    <sql id="baseCols">
+        id, fee_code, fee_name, fee_type, unit_price, unit, charge_cycle,
+        late_fee_rate, status, remark, create_time
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.feeType != null and q.feeType != ''">AND fee_type = #{q.feeType}</if>
+            <if test="q.status != null">AND status = #{q.status}</if>
+            <if test="q.chargeCycle != null and q.chargeCycle != ''">AND charge_cycle = #{q.chargeCycle}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (fee_code LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR fee_name LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="FeeStandard">
+        SELECT <include refid="baseCols"/> FROM fee_standard WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="FeeStandard">
+        SELECT <include refid="baseCols"/>
+        FROM fee_standard
+        <include refid="whereCondition"/>
+        ORDER BY id ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM fee_standard
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fee_standard
+        (fee_code, fee_name, fee_type, unit_price, unit, charge_cycle, late_fee_rate, status, remark, create_time)
+        VALUES
+        (#{feeCode}, #{feeName}, #{feeType}, IFNULL(#{unitPrice}, 0), #{unit},
+         IFNULL(#{chargeCycle}, 'MONTH'), IFNULL(#{lateFeeRate}, 0.0005), IFNULL(#{status}, 1), #{remark}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE fee_standard
+        <set>
+            <if test="feeCode != null and feeCode != ''">fee_code = #{feeCode},</if>
+            <if test="feeName != null and feeName != ''">fee_name = #{feeName},</if>
+            <if test="feeType != null and feeType != ''">fee_type = #{feeType},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="chargeCycle != null and chargeCycle != ''">charge_cycle = #{chargeCycle},</if>
+            <if test="lateFeeRate != null">late_fee_rate = #{lateFeeRate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fee_standard WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.OwnerMapper">
+
+    <sql id="baseCols">
+        o.id, o.name, o.gender, o.id_card, o.phone, o.person_type, o.house_id, o.family_count,
+        o.move_in_date, o.car_plate, o.emergency_name, o.emergency_phone, o.status, o.remark, o.create_time
+    </sql>
+
+    <sql id="listCols">
+        <include refid="baseCols"/>,
+        h.house_no AS house_no
+    </sql>
+
+    <sql id="listJoins">
+        FROM owner o
+        LEFT JOIN house h ON h.id = o.house_id
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND o.id = #{q.id}</if>
+            <if test="q.houseId != null">AND o.house_id = #{q.houseId}</if>
+            <if test="q.personType != null and q.personType != ''">AND o.person_type = #{q.personType}</if>
+            <if test="q.status != null and q.status != ''">AND o.status = #{q.status}</if>
+            <if test="q.gender != null and q.gender != ''">AND o.gender = #{q.gender}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (o.name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR o.phone LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR o.car_plate LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR h.house_no LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="Owner">
+        SELECT <include refid="listCols"/>
+        <include refid="listJoins"/>
+        WHERE o.id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Owner">
+        SELECT <include refid="listCols"/>
+        <include refid="listJoins"/>
+        <include refid="whereCondition"/>
+        ORDER BY o.id ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*)
+        <include refid="listJoins"/>
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO owner
+        (name, gender, id_card, phone, person_type, house_id, family_count, move_in_date,
+         car_plate, emergency_name, emergency_phone, status, remark, create_time)
+        VALUES
+        (#{name}, IFNULL(#{gender}, '男'), #{idCard}, #{phone}, IFNULL(#{personType}, 'OWNER'),
+         #{houseId}, IFNULL(#{familyCount}, 1), #{moveInDate}, #{carPlate}, #{emergencyName},
+         #{emergencyPhone}, IFNULL(#{status}, 'ACTIVE'), #{remark}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE owner
+        <set>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="gender != null and gender != ''">gender = #{gender},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="personType != null and personType != ''">person_type = #{personType},</if>
+            <if test="houseId != null">house_id = #{houseId},</if>
+            <if test="familyCount != null">family_count = #{familyCount},</if>
+            <if test="moveInDate != null">move_in_date = #{moveInDate},</if>
+            <if test="carPlate != null">car_plate = #{carPlate},</if>
+            <if test="emergencyName != null">emergency_name = #{emergencyName},</if>
+            <if test="emergencyPhone != null">emergency_phone = #{emergencyPhone},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM owner WHERE id = #{id}
+    </delete>
+
+    <select id="countGroupByType" resultType="map">
+        SELECT person_type AS name, COUNT(*) AS value
+        FROM owner
+        GROUP BY person_type
+    </select>
+
+</mapper>

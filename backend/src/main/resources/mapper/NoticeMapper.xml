@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.NoticeMapper">
+
+    <sql id="baseCols">
+        id, title, content, notice_type, publisher, publish_time, top_flag, status, view_count
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.noticeType != null and q.noticeType != ''">AND notice_type = #{q.noticeType}</if>
+            <if test="q.status != null">AND status = #{q.status}</if>
+            <if test="q.topFlag != null">AND top_flag = #{q.topFlag}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (title LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR content LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR publisher LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="Notice">
+        SELECT <include refid="baseCols"/> FROM notice WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Notice">
+        SELECT <include refid="baseCols"/>
+        FROM notice
+        <include refid="whereCondition"/>
+        ORDER BY top_flag DESC, publish_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM notice
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notice
+        (title, content, notice_type, publisher, publish_time, top_flag, status, view_count)
+        VALUES
+        (#{title}, #{content}, IFNULL(#{noticeType}, 'NOTIFY'), #{publisher},
+         IFNULL(#{publishTime}, NOW()), IFNULL(#{topFlag}, 0), IFNULL(#{status}, 1), IFNULL(#{viewCount}, 0))
+    </insert>
+
+    <update id="updateById">
+        UPDATE notice
+        <set>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="noticeType != null and noticeType != ''">notice_type = #{noticeType},</if>
+            <if test="publisher != null">publisher = #{publisher},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="topFlag != null">top_flag = #{topFlag},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM notice WHERE id = #{id}
+    </delete>
+
+    <update id="increaseViewCount">
+        UPDATE notice SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="lflIqScV8GoS3cPzmxWN25">
+
+<head data-page-node-id="pIqjdAwYFqgI5q9GFteQdj">
+    <meta charset="UTF-8" data-page-node-id="h2ah8iP4ST2Pt027ACIIt6">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="vKrpyM2W35A4sfuPdchLtB">
+    <title>物业管理系统</title>
+    <link rel="stylesheet" href="libs/element-ui.css" data-page-node-id="mDU2u9ibFuUeHsvSLrIwxL">
+    <link rel="stylesheet" href="css/style.css" data-page-node-id="LOyF3iInrRTSsysUquBCKX">
+</head>
+
+<body data-page-node-id="gwnB9omwg1mFrxsefW15Xe">
+    <div id="app" v-cloak data-page-node-id="AdtAKfKtTm0MgTB9Nyp2B0">
+        <div class="layout" data-page-node-id="hp9PRGQY6P2n3m1qkMgLjM">
+            <!-- ============ 侧边栏 ============ -->
+            <div class="sidebar" :class="{ collapsed: collapse }" data-page-node-id="VCXE3SaAYatXyYdOgyCm6e">
+                <div class="sidebar-logo" data-page-node-id="ozRxQ0rnjK8afuNQLzrLfi">
+                    <i class="el-icon-office-building" data-page-node-id="k6wN0zDQT0VlWEfiu4iGlC"></i>
+                    <span v-show="!collapse" data-page-node-id="mjOLYQ7zVE0MQumwMuSart">物业管理系统</span>
+                </div>
+
+                <el-menu class="sidebar-menu" :default-active="activeMenu" :collapse="collapse"
+                    :collapse-transition="false" background-color="#263445" text-color="#bfcbd9"
+                    active-text-color="#ffffff" router unique-opened data-page-node-id="ikFWbXeJChPI3AB9y3pU9r">
+
+                    <el-menu-item index="/dashboard" data-page-node-id="OjleW4RAaatVk1RuBMLASN">
+                        <i class="el-icon-s-data" data-page-node-id="mdjn3ULIz5bK12uCTVzC4u"></i>
+                        <span slot="title" data-page-node-id="70yseK0FbkrQRHrWp5BBQ5">首页看板</span>
+                    </el-menu-item>
+
+                    <el-menu-item index="/bigscreen" data-page-node-id="Bs1BigScreenMenuItem00001">
+                        <i class="el-icon-monitor" data-page-node-id="Bs1BigScreenMenuIcon0000001"></i>
+                        <span slot="title" data-page-node-id="Bs1BigScreenMenuTitle0001">数据大屏</span>
+                    </el-menu-item>
+
+                    <el-submenu index="asset" data-page-node-id="qa945Nvd8uq66XJV4muN7u">
+                        <template slot="title" data-page-node-id="DW6zyqrUTWxCqIWBBwd5Mj"><i class="el-icon-office-building" data-page-node-id="xqjwZiAsoFFuXXaHY7cBYP"></i><span data-page-node-id="RsiSwMCIG23456KXDzicMZ">房产资源</span></template>
+                        <el-menu-item index="/community3d" data-page-node-id="OcTvb1gYoyFL82ZlW5cB9v">3D 小区地图</el-menu-item>
+                        <el-menu-item index="/building" data-page-node-id="HAsykNfKrGs4pxAUdE24vr">楼栋管理</el-menu-item>
+                        <el-menu-item index="/house" data-page-node-id="HKQkNRNPUEbzXq3ZyMMvu6">房屋管理</el-menu-item>
+                        <el-menu-item index="/parking" data-page-node-id="2eSIFSpGUnHjcKKsa2NVPE">车位管理</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="resident" data-page-node-id="oCzLdThgbeup6jsvt3XLHD">
+                        <template slot="title" data-page-node-id="gUg8vJeEQLJZhsfcU62B36"><i class="el-icon-user" data-page-node-id="tbJ5pIhpI0VqNKFXHaSLgQ"></i><span data-page-node-id="6lMWFVqCUYlUkTd3NI1MUw">住户服务</span></template>
+                        <el-menu-item index="/owner" data-page-node-id="AReE457bDBqTCjcE3sVHU7">人员信息</el-menu-item>
+                        <el-menu-item index="/visitor" data-page-node-id="uqFAIbH2zZkBLpPowYKFkq">访客登记</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="fee" data-page-node-id="95Ck5FOZFRsgHK3uQFFFR9">
+                        <template slot="title" data-page-node-id="HsPugyoKvwo8x7uW6G7bBh"><i class="el-icon-money" data-page-node-id="0diOtN8fVU7QH0qroGc1uE"></i><span data-page-node-id="PB2ieQh6PNZoKX3BedFbya">收费管理</span></template>
+                        <el-menu-item index="/feeBill" data-page-node-id="H8lQ2zAnB1gBtomLlbIsSc">物业费账单</el-menu-item>
+                        <el-menu-item index="/feePayment" data-page-node-id="el7EGmBiFYlFpfehaMvKJe">缴费记录</el-menu-item>
+                        <el-menu-item index="/feeStandard" data-page-node-id="wB1sWl4wIvsMezvEo4vvZH">收费标准</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="parkingFee" data-page-node-id="2CMlJZNUVQpKgNzAvpIURD">
+                        <template slot="title" data-page-node-id="enDF0eeedmCAD7Q6QCHuHh"><i class="el-icon-truck" data-page-node-id="3g87rzILU4tvtXI06i8PmC"></i><span data-page-node-id="1jwB0TRAOJ2BWf0qD36cAl">停车收费</span></template>
+                        <el-menu-item index="/tempParking" data-page-node-id="4RWPwMVGK3weWqBvMIa1Zj">临时停车</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="service" data-page-node-id="RDPTsFOoRGICXV4C0Wmabq">
+                        <template slot="title" data-page-node-id="BTlA9tuFpf83QKxxZGaq5a"><i class="el-icon-tools" data-page-node-id="ckEUCpgh9yfnvfd0rqyRPX"></i><span data-page-node-id="LjOsM449gSnUcIfAhBNC2i">报修服务</span></template>
+                        <el-menu-item index="/repair" data-page-node-id="6pmsLoGlmTzJro2AvfoeE2">报修管理</el-menu-item>
+                        <el-menu-item index="/complaint" data-page-node-id="3JT8GdSlrbcDXabssUgt5r">投诉建议</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="manage" data-page-node-id="voc8EdgzByeDAMK1jI1z1E">
+                        <template slot="title" data-page-node-id="Sep7FEBDweB9dZavMrYw5W"><i class="el-icon-s-management" data-page-node-id="xIJWcKXHDqqZOGeXuKvWwf"></i><span data-page-node-id="0s05bgGbgdQChKaMDYZOWA">综合管理</span></template>
+                        <el-menu-item index="/notice" data-page-node-id="Ntb1ZeagBKKZlLFL0qr4hq">通知公告</el-menu-item>
+                        <el-menu-item index="/equipment" data-page-node-id="nLgUfjsGKNZi8yxSQS1ZmE">设备设施</el-menu-item>
+                    </el-submenu>
+
+                    <el-submenu index="system" v-if="isAdmin" data-page-node-id="ylflObSqaLQdVfG2ewLrpM">
+                        <template slot="title" data-page-node-id="tbsynpVeZoU9UYvOHBf5Do"><i class="el-icon-setting" data-page-node-id="i4KBirQONzECCQgWO3E1vg"></i><span data-page-node-id="CrBCcAF1JssVd6kQLic6Cr">系统管理</span></template>
+                        <el-menu-item index="/user" data-page-node-id="IPdguJVu3misodl4N21lQq">用户管理</el-menu-item>
+                        <el-menu-item index="/syslog" data-page-node-id="SysLogMenuItem00000001">操作日志</el-menu-item>
+                    </el-submenu>
+                </el-menu>
+            </div>
+
+            <!-- ============ 主区域 ============ -->
+            <div class="main-area" data-page-node-id="4Mh33vJIMnDQeKTjGZ18TQ">
+                <div class="header" data-page-node-id="yn44FwkJxlJMr47K6bwiyL">
+                    <i class="collapse-btn" :class="collapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"
+                        @click="collapse = !collapse" data-page-node-id="SMGr9XAgdiDWUVDJMiDs5f"></i>
+                    <div class="breadcrumb" data-page-node-id="hDlmNBYClHEVkt09pfGwJ6">{{ currentTitle }}</div>
+
+                    <div class="header-right" data-page-node-id="y3Wy79RFy9xhcJoANrZKcb">
+                        <el-tooltip content="刷新当前页" placement="bottom" data-page-node-id="whCA5y5VIxpsKzW5XS9diO">
+                            <i class="header-icon el-icon-refresh" @click="refresh" data-page-node-id="mT132EvGBWz0BldfeA7Awp"></i>
+                        </el-tooltip>
+                        <el-tooltip content="前往服务中心" placement="bottom" data-page-node-id="iFzHTjrVL0mIXtsjfxgPDj">
+                            <i class="header-icon el-icon-service" @click="$message.info('物业服务热线: 400-800-1234')" data-page-node-id="BNkczRGuiBhtHKQIFeyrAO"></i>
+                        </el-tooltip>
+
+                        <el-dropdown trigger="click" @command="onUserCommand" data-page-node-id="VindHthJHMfpQrB2Db995d">
+                            <div class="user-info" data-page-node-id="Mzrh2IRLjwXP9Ihe3FeIbk">
+                                <el-avatar :size="30" data-page-node-id="lpEdgK35gUDcASFwJBeIBi">{{ avatarText }}</el-avatar>
+                                <span class="uname" data-page-node-id="N3hPpBUMAjmc67TzBYnaCY">{{ user.realName || '未登录' }}</span>
+                                <span class="urole" data-page-node-id="pjUn5Lc5CtxiUBd9VjT6cu">{{ roleLabel }}</span>
+                                <i class="el-icon-arrow-down" style="margin-left:6px;font-size:12px;color:#909399" data-page-node-id="qQHtsJKkXbduEEQCuBtn6l"></i>
+                            </div>
+                            <el-dropdown-menu slot="dropdown" data-page-node-id="HKqdkGd8uFDVBKrcDBnW8W">
+                                <el-dropdown-item command="password" data-page-node-id="0fKZTSuCZtRkwhKaK5pGBX"><i class="el-icon-key" data-page-node-id="5jQi7TPSHcktK3tR3IyZxv"></i> 修改密码</el-dropdown-item>
+                                <el-dropdown-item command="logout" divided data-page-node-id="5fEWD3gy0Ueq3gjiGoVZq9"><i class="el-icon-switch-button" data-page-node-id="JcfFWBB5TJECvTrYGPJ0qy"></i>
+                                    退出登录</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </div>
+                </div>
+
+                <div class="content" data-page-node-id="KQya9271g0eeyMbSZfLXWZ">
+                    <!-- 后端不可用提示(默认不使用演示数据, 这里明确告知原因) -->
+                    <div class="demo-banner" v-if="backendDown" data-page-node-id="z6UDQIRVo2tpzz0cx1A6EU">
+                        <i class="el-icon-warning-outline" data-page-node-id="w2k4FDkaeDQcPxFm3XBxbn"></i>
+                        <span data-page-node-id="Fvo84dPMS4v7kSEdHeQF9O">
+                            无法连接后端服务（{{ baseURL }}）。请先启动后端，再点击刷新重试。
+                        </span>
+                        <el-button size="mini" type="warning" plain @click="retryBackend" data-page-node-id="u1ypeCLCpkyWwfc84h83pD">重试连接</el-button>
+                    </div>
+
+                    <router-view :key="$route.fullPath" data-page-node-id="aNvdfFp4lvWSNXEvPUDfnO"></router-view>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修改密码 -->
+        <el-dialog title="修改密码" :visible.sync="pwdVisible" width="420px" data-page-node-id="Q2cScUDkZdh1dWLa0Fa7GT">
+            <el-form :model="pwdForm" label-width="90px" data-page-node-id="0Oz8qgtqOhsRHYcUPAhapd">
+                <el-form-item label="原密码" data-page-node-id="9nZixECCcIQAh1qfUfENzK">
+                    <el-input v-model="pwdForm.oldPassword" type="password" show-password placeholder="请输入原密码" data-page-node-id="ndxFGBbi3k9eTHISVJzYuA"></el-input>
+                </el-form-item>
+                <el-form-item label="新密码" data-page-node-id="V9EDr0FhAb9HcDIRxKPaxH">
+                    <el-input v-model="pwdForm.newPassword" type="password" show-password placeholder="请输入新密码" data-page-node-id="WkvHkyBfNHVwBYpSOsJzPu"></el-input>
+                </el-form-item>
+                <el-form-item label="确认密码" data-page-node-id="KKNr5OIzU8thlCE7VRiPJ5">
+                    <el-input v-model="pwdForm.confirmPassword" type="password" show-password placeholder="请再次输入新密码" data-page-node-id="DdF7jQJYcGJJ6wvb5n6QDd"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" data-page-node-id="WBi01yGFdW2rmdPHwQK5aM">
+                <el-button @click="pwdVisible = false" data-page-node-id="GGsCH5IRwmiqX9ICECLdrP">取 消</el-button>
+                <el-button type="primary" @click="submitPassword" data-page-node-id="55TwGB6MUTA4uh9KqZHLHq">确定修改</el-button>
+            </div>
+        </el-dialog>
+    </div>
+
+    <!-- ============ 依赖库 ============ -->
+    <script src="libs/vue.min.js"></script>
+    <script src="libs/vue-router.min.js"></script>
+    <script src="libs/element-ui.js"></script>
+    <script src="libs/axios.min.js"></script>
+    <script src="libs/echarts.min.js"></script>
+
+    <!-- ============ 应用脚本 ============ -->
+    <!-- 部署环境配置：前后端不同域名时改这一个文件（必须在 config.js 之前加载） -->
+    <script src="js/env.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/mock.js"></script>
+    <script src="js/api.js"></script>
+
+    <!-- 3D 小区地图依赖(本地文件, 不依赖外网) -->
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+
+    <!-- 角色权限 mixin: 必须在页面组件注册之前引入(见 js/permission.js 顶部说明) -->
+    <script src="js/permission.js"></script>
+
+    <!-- 页面组件 -->
+    <script src="js/pages/dashboard.js"></script>
+    <script src="js/pages/bigscreen.js"></script>
+    <script src="js/pages/community3d.js"></script>
+    <script src="js/pages/building.js"></script>
+    <script src="js/pages/house.js"></script>
+    <script src="js/pages/owner.js"></script>
+    <script src="js/pages/parking.js"></script>
+    <script src="js/pages/tempParking.js"></script>
+    <script src="js/pages/feeStandard.js"></script>
+    <script src="js/pages/feeBill.js"></script>
+    <script src="js/pages/feePayment.js"></script>
+    <script src="js/pages/repair.js"></script>
+    <script src="js/pages/complaint.js"></script>
+    <script src="js/pages/notice.js"></script>
+    <script src="js/pages/visitor.js"></script>
+    <script src="js/pages/equipment.js"></script>
+    <script src="js/pages/user.js"></script>
+    <script src="js/pages/syslog.js"></script>
+
+    <script>
+        DemoMode.sync();
+
+        // ==================== 路由 ====================
+        const routes = [
+            { path: '/', redirect: '/dashboard' },
+            { path: '/dashboard', component: { template: '<page-dashboard/>' }, meta: { title: '首页看板' } },
+            { path: '/bigscreen', component: { template: '<page-bigscreen/>' }, meta: { title: '数据大屏' } },
+            { path: '/community3d', component: { template: '<page-community3d/>' }, meta: { title: '3D 小区地图' } },
+            { path: '/building', component: { template: '<page-building/>' }, meta: { title: '楼栋管理' } },
+            { path: '/house', component: { template: '<page-house/>' }, meta: { title: '房屋管理' } },
+            { path: '/owner', component: { template: '<page-owner/>' }, meta: { title: '人员信息' } },
+            { path: '/parking', component: { template: '<page-parking/>' }, meta: { title: '车位管理' } },
+            { path: '/tempParking', component: { template: '<page-temp-parking/>' }, meta: { title: '临时停车' } },
+            { path: '/feeStandard', component: { template: '<page-fee-standard/>' }, meta: { title: '收费标准' } },
+            { path: '/feeBill', component: { template: '<page-fee-bill/>' }, meta: { title: '物业费账单' } },
+            { path: '/feePayment', component: { template: '<page-fee-payment/>' }, meta: { title: '缴费记录' } },
+            { path: '/repair', component: { template: '<page-repair/>' }, meta: { title: '报修管理' } },
+            { path: '/complaint', component: { template: '<page-complaint/>' }, meta: { title: '投诉建议' } },
+            { path: '/notice', component: { template: '<page-notice/>' }, meta: { title: '通知公告' } },
+            { path: '/visitor', component: { template: '<page-visitor/>' }, meta: { title: '访客登记' } },
+            { path: '/equipment', component: { template: '<page-equipment/>' }, meta: { title: '设备设施' } },
+            { path: '/user', component: { template: '<page-user/>' }, meta: { title: '用户管理' } },
+            { path: '/syslog', component: { template: '<page-syslog/>' }, meta: { title: '操作日志' } },
+            // 兜底路由: 必须放在最后。
+            // 地址栏 hash 落在任何未登记的路径时(例如历史遗留的 #/redirect/xxx、手工改错的地址),
+            // 一律回到首页看板, 而不是让 <router-view> 因"无匹配组件"渲染出一片空白。
+            { path: '*', redirect: '/dashboard' }
+        ];
+
+        const router = new VueRouter({ routes });
+
+        // ==================== 主应用 ====================
+        new Vue({
+            el: '#app',
+            router,
+            data() {
+                return {
+                    collapse: false,
+                    user: PmsUtils.currentUser(),
+                    pwdVisible: false,
+                    baseURL: AppConfig.baseURL,
+                    backendDown: false,
+                    pwdForm: { oldPassword: '', newPassword: '', confirmPassword: '' }
+                };
+            },
+            computed: {
+                activeMenu() {
+                    return this.$route.path;
+                },
+                currentTitle() {
+                    return (this.$route.meta && this.$route.meta.title) || '物业管理系统';
+                },
+                isDemo() {
+                    return DemoMode.isOn();
+                },
+                isAdmin() {
+                    return this.user.role === 'ADMIN';
+                },
+                roleLabel() {
+                    return PmsUtils.label('userRole', this.user.role);
+                },
+                avatarText() {
+                    const n = this.user.realName || 'U';
+                    return n.substring(n.length - 2);
+                }
+            },
+            created() {
+                // 登录校验
+                if (!localStorage.getItem('pms_token')) {
+                    location.href = 'index.html';
+                    return;
+                }
+                // 若当前处于演示模式，先探测后端：后端已启动则自动切回真实数据并重新登录
+                // (演示模式下的 token 是本地伪造的, 真实后端不认识, 必须重新登录)
+                if (this.isDemo) {
+                    Api.ping().then(ok => {
+                        if (ok) {
+                            DemoMode.disable();
+                            DemoMode.sync();
+                            localStorage.removeItem('pms_token');
+                            localStorage.removeItem('pms_user');
+                            this.$message.success('检测到后端服务，正在切换为真实数据，请重新登录...');
+                            setTimeout(() => { location.href = 'index.html'; }, 800);
+                        }
+                    });
+                    return;
+                }
+                // 后台校验登录态(演示模式跳过)
+                if (!this.isDemo) {
+                    Api.currentUser().then(res => {
+                        if (res.data) {
+                            this.user = res.data;
+                            localStorage.setItem('pms_user', JSON.stringify(res.data));
+                        }
+                        this.backendDown = false;
+                    }).catch(err => {
+                        // 后端连不上时明确提示, 避免页面一片空白却看不出原因
+                        const msg = (err && err.message) || '加载用户信息失败';
+                        if (/无法连接后端服务/.test(msg)) {
+                            this.backendDown = true;
+                            this.$message.error(msg);
+                        }
+                    });
+                }
+            },
+            methods: {
+                refresh() {
+                    // 整页重载。
+                    // 说明: 早期版本这里用 $router.replace('/redirect' + path) 想"重挂路由",
+                    // 但路由表里并没有 /redirect/:path 这条路由, 于是 <router-view> 匹配不到组件,
+                    // 内容区直接空白; 更麻烦的是地址栏 hash 被改成了 #/redirect/xxx,
+                    // 用户以为只是"刷新了一下", 再按 F5 依旧空白。改用整页重载彻底绕开。
+                    location.reload();
+                },
+                // 后端恢复后重试: 重新探测, 成功则重新加载页面
+                retryBackend() {
+                    Api.ping().then(ok => {
+                        if (ok) {
+                            this.$message.success('已连接后端服务，正在重新加载...');
+                            setTimeout(() => location.reload(), 600);
+                        } else {
+                            this.$message.error('仍无法连接后端服务（' + this.baseURL + '），请确认后端已启动');
+                        }
+                    });
+                },
+                onUserCommand(cmd) {
+                    if (cmd === 'logout') {
+                        this.$confirm('确定要退出登录吗？', '提示', { type: 'warning' })
+                            .then(() => {
+                                Api.logout().catch(() => { });
+                                localStorage.removeItem('pms_token');
+                                localStorage.removeItem('pms_token_exp');
+                                localStorage.removeItem('pms_user');
+                                location.href = 'index.html';
+                            })
+                            .catch(() => { });
+                    } else if (cmd === 'password') {
+                        this.pwdForm = { oldPassword: '', newPassword: '', confirmPassword: '' };
+                        this.pwdVisible = true;
+                    }
+                },
+                submitPassword() {
+                    const f = this.pwdForm;
+                    if (!f.oldPassword || !f.newPassword) {
+                        return this.$message.warning('请填写完整');
+                    }
+                    if (f.newPassword !== f.confirmPassword) {
+                        return this.$message.warning('两次输入的新密码不一致');
+                    }
+                    if (f.newPassword.length < 6) {
+                        return this.$message.warning('新密码长度不能少于 6 位');
+                    }
+                    if (this.isDemo) {
+                        this.pwdVisible = false;
+                        return this.$message.success('演示模式下密码修改已模拟成功');
+                    }
+                    Api.changePassword({ oldPassword: f.oldPassword, newPassword: f.newPassword })
+                        .then(() => {
+                            this.pwdVisible = false;
+                            // 改密后后端会作废该账号全部历史令牌(token_version 自增),
+                            // 当前会话也已失效, 因此立即清理本地令牌并回到登录页
+                            this.$message.success('密码修改成功，其它设备的登录已失效，请重新登录');
+                            setTimeout(() => {
+                                localStorage.removeItem('pms_token');
+                                localStorage.removeItem('pms_token_exp');
+                                localStorage.removeItem('pms_user');
+                                location.href = 'index.html';
+                            }, 1000);
+                        })
+                        .catch(err => this.$message.error(err.message));
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

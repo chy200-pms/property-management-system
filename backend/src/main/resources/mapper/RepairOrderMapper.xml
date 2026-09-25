@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.RepairOrderMapper">
+
+    <sql id="baseCols">
+        id, order_no, owner_id, owner_name, phone, house_id, house_no, title, content,
+        repair_type, urgency, status, handler, handler_phone, assign_time, finish_time,
+        cost, rating, feedback, remark, create_time
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.ownerId != null">AND owner_id = #{q.ownerId}</if>
+            <if test="q.houseId != null">AND house_id = #{q.houseId}</if>
+            <if test="q.status != null and q.status != ''">AND status = #{q.status}</if>
+            <if test="q.repairType != null and q.repairType != ''">AND repair_type = #{q.repairType}</if>
+            <if test="q.urgency != null and q.urgency != ''">AND urgency = #{q.urgency}</if>
+            <if test="q.handler != null and q.handler != ''">AND handler = #{q.handler}</if>
+            <if test="q.beginDate != null">AND create_time &gt;= #{q.beginDate}</if>
+            <if test="q.endDate != null">AND create_time &lt;= CONCAT(#{q.endDate}, ' 23:59:59')</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (order_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR title LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR owner_name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR house_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR handler LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="RepairOrder">
+        SELECT <include refid="baseCols"/> FROM repair_order WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="RepairOrder">
+        SELECT <include refid="baseCols"/>
+        FROM repair_order
+        <include refid="whereCondition"/>
+        ORDER BY
+            CASE status WHEN 'PENDING' THEN 1 WHEN 'ASSIGNED' THEN 2 WHEN 'PROCESSING' THEN 3 ELSE 4 END,
+            create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM repair_order
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO repair_order
+        (order_no, owner_id, owner_name, phone, house_id, house_no, title, content,
+         repair_type, urgency, status, handler, handler_phone, assign_time, finish_time,
+         cost, rating, feedback, remark, create_time)
+        VALUES
+        (#{orderNo}, #{ownerId}, #{ownerName}, #{phone}, #{houseId}, #{houseNo}, #{title}, #{content},
+         IFNULL(#{repairType}, 'OTHER'), IFNULL(#{urgency}, 'NORMAL'), IFNULL(#{status}, 'PENDING'),
+         #{handler}, #{handlerPhone}, #{assignTime}, #{finishTime},
+         IFNULL(#{cost}, 0), #{rating}, #{feedback}, #{remark}, IFNULL(#{createTime}, NOW()))
+    </insert>
+
+    <update id="updateById">
+        UPDATE repair_order
+        <set>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="repairType != null and repairType != ''">repair_type = #{repairType},</if>
+            <if test="urgency != null and urgency != ''">urgency = #{urgency},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="handler != null">handler = #{handler},</if>
+            <if test="handlerPhone != null">handler_phone = #{handlerPhone},</if>
+            <if test="assignTime != null">assign_time = #{assignTime},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            <if test="cost != null">cost = #{cost},</if>
+            <if test="rating != null">rating = #{rating},</if>
+            <if test="feedback != null">feedback = #{feedback},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM repair_order WHERE id = #{id}
+    </delete>
+
+    <select id="countGroupByStatus" resultType="map">
+        SELECT status AS name, COUNT(*) AS value
+        FROM repair_order
+        GROUP BY status
+    </select>
+
+    <select id="countGroupByType" resultType="map">
+        SELECT repair_type AS name, COUNT(*) AS value
+        FROM repair_order
+        GROUP BY repair_type
+        ORDER BY value DESC
+    </select>
+
+    <select id="avgRating" resultType="java.math.BigDecimal">
+        SELECT IFNULL(ROUND(AVG(rating), 2), 0)
+        FROM repair_order
+        WHERE rating IS NOT NULL
+    </select>
+
+</mapper>

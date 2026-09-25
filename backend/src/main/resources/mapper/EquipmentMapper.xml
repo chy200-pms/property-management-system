@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.EquipmentMapper">
+
+    <sql id="baseCols">
+        id, equipment_no, name, equipment_type, location, brand, status,
+        buy_date, maintain_cycle, last_maintain, next_maintain, keeper, remark
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.equipmentType != null and q.equipmentType != ''">AND equipment_type = #{q.equipmentType}</if>
+            <if test="q.status != null and q.status != ''">AND status = #{q.status}</if>
+            <if test="q.location != null and q.location != ''">AND location LIKE CONCAT('%', #{q.location}, '%')</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (equipment_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR location LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR brand LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR keeper LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="Equipment">
+        SELECT <include refid="baseCols"/> FROM equipment WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Equipment">
+        SELECT <include refid="baseCols"/>
+        FROM equipment
+        <include refid="whereCondition"/>
+        ORDER BY equipment_type ASC, id ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM equipment
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO equipment
+        (equipment_no, name, equipment_type, location, brand, status,
+         buy_date, maintain_cycle, last_maintain, next_maintain, keeper, remark)
+        VALUES
+        (#{equipmentNo}, #{name}, IFNULL(#{equipmentType}, 'OTHER'), #{location}, #{brand},
+         IFNULL(#{status}, 'NORMAL'), #{buyDate}, IFNULL(#{maintainCycle}, 30),
+         #{lastMaintain}, #{nextMaintain}, #{keeper}, #{remark})
+    </insert>
+
+    <update id="updateById">
+        UPDATE equipment
+        <set>
+            <if test="equipmentNo != null and equipmentNo != ''">equipment_no = #{equipmentNo},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="equipmentType != null and equipmentType != ''">equipment_type = #{equipmentType},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="buyDate != null">buy_date = #{buyDate},</if>
+            <if test="maintainCycle != null">maintain_cycle = #{maintainCycle},</if>
+            <if test="lastMaintain != null">last_maintain = #{lastMaintain},</if>
+            <if test="nextMaintain != null">next_maintain = #{nextMaintain},</if>
+            <if test="keeper != null">keeper = #{keeper},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM equipment WHERE id = #{id}
+    </delete>
+
+</mapper>

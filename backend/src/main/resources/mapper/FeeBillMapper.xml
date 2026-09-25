@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.property.mapper.FeeBillMapper">
+
+    <sql id="baseCols">
+        id, bill_no, owner_id, owner_name, house_id, house_no, parking_id, parking_no,
+        standard_id, fee_type, fee_name, period, amount, paid_amount, pay_status,
+        due_date, pay_time, pay_method, generate_time, remark
+    </sql>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="q.id != null">AND id = #{q.id}</if>
+            <if test="q.ownerId != null">AND owner_id = #{q.ownerId}</if>
+            <if test="q.houseId != null">AND house_id = #{q.houseId}</if>
+            <if test="q.parkingId != null">AND parking_id = #{q.parkingId}</if>
+            <if test="q.feeType != null and q.feeType != ''">AND fee_type = #{q.feeType}</if>
+            <if test="q.payStatus != null and q.payStatus != ''">AND pay_status = #{q.payStatus}</if>
+            <if test="q.period != null and q.period != ''">AND period = #{q.period}</if>
+            <if test="q.beginPeriod != null and q.beginPeriod != ''">AND period &gt;= #{q.beginPeriod}</if>
+            <if test="q.endPeriod != null and q.endPeriod != ''">AND period &lt;= #{q.endPeriod}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (bill_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR owner_name LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR house_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR parking_no LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultType="FeeBill">
+        SELECT <include refid="baseCols"/> FROM fee_bill WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="FeeBill">
+        SELECT <include refid="baseCols"/>
+        FROM fee_bill
+        <include refid="whereCondition"/>
+        ORDER BY period DESC, id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByQuery" resultType="long">
+        SELECT COUNT(*) FROM fee_bill
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fee_bill
+        (bill_no, owner_id, owner_name, house_id, house_no, parking_id, parking_no, standard_id,
+         fee_type, fee_name, period, amount, paid_amount, pay_status, due_date, pay_time, pay_method,
+         generate_time, remark)
+        VALUES
+        (#{billNo}, #{ownerId}, #{ownerName}, #{houseId}, #{houseNo}, #{parkingId}, #{parkingNo},
+         #{standardId}, #{feeType}, #{feeName}, #{period}, IFNULL(#{amount}, 0), IFNULL(#{paidAmount}, 0),
+         IFNULL(#{payStatus}, 'UNPAID'), #{dueDate}, #{payTime}, #{payMethod}, NOW(), #{remark})
+    </insert>
+
+    <update id="updateById">
+        UPDATE fee_bill
+        <set>
+            <if test="ownerId != null">owner_id = #{ownerId},</if>
+            <if test="ownerName != null">owner_name = #{ownerName},</if>
+            <if test="houseId != null">house_id = #{houseId},</if>
+            <if test="houseNo != null">house_no = #{houseNo},</if>
+            <if test="parkingId != null">parking_id = #{parkingId},</if>
+            <if test="parkingNo != null">parking_no = #{parkingNo},</if>
+            <if test="feeType != null and feeType != ''">fee_type = #{feeType},</if>
+            <if test="feeName != null and feeName != ''">fee_name = #{feeName},</if>
+            <if test="period != null and period != ''">period = #{period},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="paidAmount != null">paid_amount = #{paidAmount},</if>
+            <if test="payStatus != null and payStatus != ''">pay_status = #{payStatus},</if>
+            <if test="dueDate != null">due_date = #{dueDate},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="payMethod != null">pay_method = #{payMethod},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fee_bill WHERE id = #{id}
+    </delete>
+
+    <!-- ============ 统计相关 ============ -->
+
+    <select id="countGroupByStatus" resultType="map">
+        SELECT pay_status AS name,
+               COUNT(*) AS value,
+               IFNULL(SUM(amount), 0) AS amount,
+               IFNULL(SUM(paid_amount), 0) AS paidAmount
+        FROM fee_bill
+        GROUP BY pay_status
+    </select>
+
+    <select id="countGroupByType" resultType="map">
+        SELECT fee_type AS name,
+               COUNT(*) AS value,
+               IFNULL(SUM(amount), 0) AS amount,
+               IFNULL(SUM(paid_amount), 0) AS paidAmount
+        FROM fee_bill
+        GROUP BY fee_type
+    </select>
+
+    <select id="sumGroupByPeriod" resultType="map">
+        SELECT period AS name,
+               IFNULL(SUM(amount), 0) AS amount,
+               IFNULL(SUM(paid_amount), 0) AS paidAmount,
+               COUNT(*) AS value
+        FROM fee_bill
+        GROUP BY period
+        ORDER BY period ASC
+    </select>
+
+    <delete id="deleteUnpaidByPeriod">
+        DELETE FROM fee_bill
+        WHERE period = #{period}
+          AND fee_type = #{feeType}
+          AND pay_status IN ('UNPAID', 'OVERDUE')
+    </delete>
+
+    <select id="existsBill" resultType="int">
+        SELECT COUNT(*) FROM fee_bill
+        WHERE owner_id = #{ownerId}
+          AND period = #{period}
+          AND fee_type = #{feeType}
+        <choose>
+            <when test="parkingId != null">AND parking_id = #{parkingId}</when>
+            <otherwise>AND parking_id IS NULL</otherwise>
+        </choose>
+    </select>
+
+    <select id="sumUnpaidAmount" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(amount - paid_amount), 0)
+        FROM fee_bill
+        WHERE pay_status IN ('UNPAID', 'OVERDUE', 'PARTIAL')
+    </select>
+
+</mapper>
